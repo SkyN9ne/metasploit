@@ -21,13 +21,14 @@ on:
     branches-ignore:
       - gh-pages
       - metakitty
+      - weekly-dependency-updates
   pull_request:
-    branches:
-      - '*'
+    branches-ignore:
+      - weekly-dependency-updates
 
 jobs:
   msftidy:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     timeout-minutes: 40
 
     strategy:

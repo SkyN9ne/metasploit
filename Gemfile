@@ -15,7 +15,8 @@ group :development do
   # generating documentation
   gem 'yard'
   # for development and testing purposes
-  gem 'pry-byebug'
+  # lock to version with 2.6 support until project updates
+  gem 'pry-byebug', "~> 3.9.0"
   # module documentation
   gem 'octokit'
   # memory profiling
@@ -45,3 +46,4 @@ group :test do
   # Manipulate Time.now in specs
   gem 'timecop'
 end
+

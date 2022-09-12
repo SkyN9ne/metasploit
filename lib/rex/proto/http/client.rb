@@ -36,6 +36,7 @@ class Client
     self.config = Http::ClientRequest::DefaultConfig.merge({
       'read_max_data'   => (1024*1024*1),
       'vhost'           => self.hostname,
+      'ssl_server_name_indication' => self.hostname,
     })
     self.config['agent'] ||= Rex::UserAgent.session_agent
 
@@ -62,6 +63,8 @@ class Client
       'pad_get_params_count'   => 'integer',
       'pad_post_params'        => 'bool',
       'pad_post_params_count'  => 'integer',
+      'shuffle_get_params'     => 'bool',
+      'shuffle_post_params'    => 'bool',
       'uri_fake_end'           => 'bool',
       'uri_fake_params_start'  => 'bool',
       'header_folding'         => 'bool',
@@ -139,6 +142,7 @@ class Client
   # @option opts 'encode_params' [Bool]   URI encode the GET or POST variables (names and values), default: true
   # @option opts 'vars_get'      [Hash]   GET variables as a hash to be translated into a query string
   # @option opts 'vars_post'     [Hash]   POST variables as a hash to be translated into POST data
+  # @option opts 'vars_form_data'     [Hash]   POST form_data variables as a hash to be translated into multi-part POST form data
   #
   # @return [ClientRequest]
   def request_cgi(opts = {})
@@ -147,7 +151,6 @@ class Client
     opts['cgi'] = true
     opts['port'] = self.port
     opts['ssl'] = self.ssl
-    opts['ctype'] ||= 'application/x-www-form-urlencoded' if opts['method'] == 'POST'
 
     ClientRequest.new(opts)
   end
@@ -171,7 +174,8 @@ class Client
     timeout = (t.nil? or t == -1) ? 0 : t
 
     self.conn = Rex::Socket::Tcp.create(
-      'PeerHost'   => self.hostname,
+      'PeerHost'    => self.hostname,
+      'PeerHostname' => self.config['ssl_server_name_indication'] || self.config['vhost'],
       'PeerPort'   => self.port.to_i,
       'LocalHost'  => self.local_host,
       'LocalPort'  => self.local_port,
@@ -598,8 +602,8 @@ class Client
           rblob = rbody.to_s + rbufq.to_s
           tries = 0
           begin
-            # XXX: This doesn't deal with chunked encoding or "Content-type: text/html; charset=..."
-            while tries < 1000 and resp.headers["Content-Type"]== "text/html" and rblob !~ /<\/html>/i
+            # XXX: This doesn't deal with chunked encoding
+            while tries < 1000 and resp.headers["Content-Type"] and resp.headers["Content-Type"].start_with?('text/html') and rblob !~ /<\/html>/i
               buff = conn.get_once(-1, 0.05)
               break if not buff
               rblob += buff
@@ -730,7 +734,6 @@ protected
   # The established NTLM connection info
   #
   attr_accessor :ntlm_client
-
 end
 
 end

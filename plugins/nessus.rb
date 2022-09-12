@@ -24,11 +24,11 @@ module Msf
       end
 
       def xindex
-        "#{Msf::Config.get_config_root}/nessus_index"
+        "#{Msf::Config.config_directory}/nessus_index"
       end
 
       def nessus_yaml
-        "#{Msf::Config.get_config_root}/nessus.yaml"
+        "#{Msf::Config.config_directory}/nessus.yaml"
       end
 
       def msf_local
@@ -102,7 +102,7 @@ module Msf
         start = Time.now
         print_status("Creating Exploit Search Index - (#{xindex}) - this won't take long.")
         count = 0
-        #Use Msf::Config.get_config_root as the location.
+        #Use Msf::Config.config_directory as the location.
         File.open("#{xindex}", "w+") do |f|
           #need to add version line.
           f.puts(Msf::Framework::Version)
@@ -348,7 +348,7 @@ module Msf
         case args.length
         when 1,2
           if args[0].include? "@"
-            cred,targ = args[0].split('@', 2)
+            cred, _split, targ = args[0].rpartition('@')
             @user,@pass = cred.split(':', 2)
             targ ||= '127.0.0.1:8834'
             @host,@port = targ.split(':', 2)
