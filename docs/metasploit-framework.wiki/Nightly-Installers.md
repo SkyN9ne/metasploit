@@ -4,7 +4,7 @@ Installers are built nightly for macOS, Windows (64-bit) and Linux.  These insta
 
 The following script invocation will import the Rapid7 signing key and setup the package for supported Linux and macOS systems:
 
-```
+```sh
 curl https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb > msfinstall && \
   chmod 755 msfinstall && \
   ./msfinstall
@@ -20,7 +20,7 @@ Linux packages are built nightly for .deb (i386, amd64, armhf, arm64) and .rpm (
 
 ### macOS manual installation
 
-The latest OS X installer package can also be downloaded directly here: <https://osx.metasploit.com/metasploitframework-latest.pkg>, with the last 10 builds archived at <https://osx.metasploit.com/>. Simply download and launch the installer to install Metaploit Framework with all of its dependencies.
+The latest OS X installer package can also be downloaded directly here: <https://osx.metasploit.com/metasploitframework-latest.pkg>, with the last 8 builds archived at <https://osx.metasploit.com/>. Simply download and launch the installer to install Metasploit Framework with all of its dependencies.
 
 ## Installing Metasploit on Windows
 
@@ -33,7 +33,7 @@ If you downloaded Metasploit from us, there is no cause for alarm.  We pride our
 ### Windows silent installation
 
 The PowerShell below will download and install the framework, and is suitable for automated Windows deployments. Note that, the installer will be downloaded to `$DownloadLocation` and won't be deleted after the script has run.
-```
+```powershell
 [CmdletBinding()]
 Param(
     $DownloadURL = "https://windows.metasploit.com/metasploitframework-latest.msi",

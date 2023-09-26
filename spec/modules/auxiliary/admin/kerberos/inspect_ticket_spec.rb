@@ -459,7 +459,7 @@ RSpec.describe 'kerberos inspect ticket' do
 
   let(:expected_decrypted_aes_output) do
     expected_output = ["#{file_format} File:#{ticket_path}"]
-    expected_output << <<~'EOF'.chomp # Single quote removes interpolation for the hex results
+    expected_output << <<~EOF.chomp
       Primary Principal: Administrator@WINDOMAIN.LOCAL
       Ccache version: 4
 
@@ -475,10 +475,10 @@ RSpec.describe 'kerberos inspect ticket' do
           Addresses: 0
           Authdatas: 0
           Times:
-            Auth time: 2023-01-13 14:31:25 +0000
-            Start time: 2023-01-13 14:31:25 +0000
-            End time: 2033-01-10 14:31:25 +0000
-            Renew Till: 2033-01-10 14:31:25 +0000
+            Auth time: #{Time.parse('2023-01-13 14:31:25 UTC').to_time}
+            Start time: #{Time.parse('2023-01-13 14:31:25 UTC').to_time}
+            End time: #{Time.parse('2033-01-10 14:31:25 UTC').to_time}
+            Renew Till: #{Time.parse('2033-01-10 14:31:25 UTC').to_time}
           Ticket:
             Ticket Version Number: 5
             Realm: WINDOMAIN.LOCAL
@@ -488,20 +488,20 @@ RSpec.describe 'kerberos inspect ticket' do
               Key Version Number: 2
               Decrypted (with key: 4b912be0366a6f37f4a7d571bee18b1173d93195ef76f8d1e3e81ef6172ab326):
                 Times:
-                  Auth time: 2023-01-13 14:31:25 UTC
-                  Start time: 2023-01-13 14:31:25 UTC
-                  End time: 2033-01-10 14:31:25 UTC
-                  Renew Till: 2033-01-10 14:31:25 UTC
+                  Auth time: #{Time.parse('2023-01-13 14:31:25 UTC').to_time}
+                  Start time: #{Time.parse('2023-01-13 14:31:25 UTC').to_time}
+                  End time: #{Time.parse('2033-01-10 14:31:25 UTC').to_time}
+                  Renew Till: #{Time.parse('2033-01-10 14:31:25 UTC').to_time}
                 Client Addresses: 0
                 Transited: tr_type: 0, Contents: ""
                 Client Name: 'Administrator'
                 Client Realm: 'WINDOMAIN.LOCAL'
                 Ticket etype: 18 (AES256)
-                Encryption Key: 3031363031303130376565306436383863393961393338383633346165303431
+                Session Key: 3031363031303130376565306436383863393961393338383633346165303431
                 Flags: 0x50a00000 (FORWARDABLE, PROXIABLE, RENEWABLE, PRE_AUTHENT)
                 PAC:
                   Validation Info:
-                    Logon Time: 2023-01-13 14:31:25 +0000
+                    Logon Time: #{Time.parse('2023-01-13 14:31:25 UTC').to_time}
                     Logoff Time: Never Expires (inf)
                     Kick Off Time: Never Expires (inf)
                     Password Last Set: No Time Set (0)
@@ -512,21 +512,85 @@ RSpec.describe 'kerberos inspect ticket' do
                     User ID: 500
                     Primary Group ID: 513
                     User Flags: 0
+                      .... .... .... .... ..0. .... .... .... Used Lmv2 Auth And Ntlmv2 Session Key: The USED_LMV2_AUTH_AND_NTLMV2_SESSION_KEY bit is NOT SET
+                      .... .... .... .... ...0 .... .... .... Used Lmv2 Auth And Session Key: The USED_LMV2_AUTH_AND_SESSION_KEY bit is NOT SET
+                      .... .... .... .... .... 0... .... .... Used Ntlmv2 Auth And Session Key: The USED_NTLMV2_AUTH_AND_SESSION_KEY bit is NOT SET
+                      .... .... .... .... .... .0.. .... .... Profile Path Populated: The PROFILE_PATH_POPULATED bit is NOT SET
+                      .... .... .... .... .... ..0. .... .... Resource Group Ids: The RESOURCE_GROUP_IDS bit is NOT SET
+                      .... .... .... .... .... ...0 .... .... Accepts Ntlmv2: The ACCEPTS_NTLMV2 bit is NOT SET
+                      .... .... .... .... .... .... 0... .... Machine Account: The MACHINE_ACCOUNT bit is NOT SET
+                      .... .... .... .... .... .... .0.. .... Sub Authentication: The SUB_AUTHENTICATION bit is NOT SET
+                      .... .... .... .... .... .... ..0. .... Extra Sids: The EXTRA_SIDS bit is NOT SET
+                      .... .... .... .... .... .... .... 0... Lan Manager: The LAN_MANAGER bit is NOT SET
+                      .... .... .... .... .... .... .... ..0. No Encryption: The NO_ENCRYPTION bit is NOT SET
+                      .... .... .... .... .... .... .... ...0 Guest: The GUEST bit is NOT SET
                     User Session Key: 00000000000000000000000000000000
                     User Account Control: 528
+                      .... .... ..0. .... .... .... .... .... Use Aes Keys: The USE_AES_KEYS bit is NOT SET
+                      .... .... ...0 .... .... .... .... .... Partial Secrets Account: The PARTIAL_SECRETS_ACCOUNT bit is NOT SET
+                      .... .... .... 0... .... .... .... .... No Auth Data Required: The NO_AUTH_DATA_REQUIRED bit is NOT SET
+                      .... .... .... .0.. .... .... .... .... Trusted To Authenticate For Delegation: The TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION bit is NOT SET
+                      .... .... .... ..0. .... .... .... .... Password Expired: The PASSWORD_EXPIRED bit is NOT SET
+                      .... .... .... ...0 .... .... .... .... Dont Require Preauth: The DONT_REQUIRE_PREAUTH bit is NOT SET
+                      .... .... .... .... 0... .... .... .... Use Des Key Only: The USE_DES_KEY_ONLY bit is NOT SET
+                      .... .... .... .... .0.. .... .... .... Not Delegated: The NOT_DELEGATED bit is NOT SET
+                      .... .... .... .... ..0. .... .... .... Trusted For Delegation: The TRUSTED_FOR_DELEGATION bit is NOT SET
+                      .... .... .... .... ...0 .... .... .... Smartcard Required: The SMARTCARD_REQUIRED bit is NOT SET
+                      .... .... .... .... .... 0... .... .... Encrypted Test Password Allowed: The ENCRYPTED_TEST_PASSWORD_ALLOWED bit is NOT SET
+                      .... .... .... .... .... .0.. .... .... Account Auto Lock: The ACCOUNT_AUTO_LOCK bit is NOT SET
+                      .... .... .... .... .... ..1. .... .... Dont Expire Password: The DONT_EXPIRE_PASSWORD bit is SET
+                      .... .... .... .... .... ...0 .... .... Server Trust Account: The SERVER_TRUST_ACCOUNT bit is NOT SET
+                      .... .... .... .... .... .... 0... .... Workstation Trust Account: The WORKSTATION_TRUST_ACCOUNT bit is NOT SET
+                      .... .... .... .... .... .... .0.. .... Interdomain Trust Account: The INTERDOMAIN_TRUST_ACCOUNT bit is NOT SET
+                      .... .... .... .... .... .... ..0. .... Mns Logon Account: The MNS_LOGON_ACCOUNT bit is NOT SET
+                      .... .... .... .... .... .... ...1 .... Normal Account: The NORMAL_ACCOUNT bit is SET
+                      .... .... .... .... .... .... .... 0... Temp Duplicate Account: The TEMP_DUPLICATE_ACCOUNT bit is NOT SET
+                      .... .... .... .... .... .... .... .0.. Password Not Required: The PASSWORD_NOT_REQUIRED bit is NOT SET
+                      .... .... .... .... .... .... .... ..0. Home Directory Required: The HOME_DIRECTORY_REQUIRED bit is NOT SET
+                      .... .... .... .... .... .... .... ...0 Account Disabled: The ACCOUNT_DISABLED bit is NOT SET
                     Sub Auth Status: 0
                     Last Successful Interactive Logon: No Time Set (0)
                     Last Failed Interactive Logon: No Time Set (0)
                     Failed Interactive Logon Count: 0
-                    SID Count: 0
+                    Extra SID Count: 0
                     Resource Group Count: 0
                     Group Count: 5
                     Group IDs:
-                      Relative ID: 513, Attributes: 7
-                      Relative ID: 512, Attributes: 7
-                      Relative ID: 520, Attributes: 7
-                      Relative ID: 518, Attributes: 7
-                      Relative ID: 519, Attributes: 7
+                      Relative ID: 513
+                      Attributes: 7
+                        ..0. .... .... .... .... .... .... .... Resource: The RESOURCE bit is NOT SET
+                        .... .... .... .... .... .... .... 0... Owner: The OWNER bit is NOT SET
+                        .... .... .... .... .... .... .... .1.. Enabled: The ENABLED bit is SET
+                        .... .... .... .... .... .... .... ..1. Enabled By Default: The ENABLED_BY_DEFAULT bit is SET
+                        .... .... .... .... .... .... .... ...1 Mandatory: The MANDATORY bit is SET
+                      Relative ID: 512
+                      Attributes: 7
+                        ..0. .... .... .... .... .... .... .... Resource: The RESOURCE bit is NOT SET
+                        .... .... .... .... .... .... .... 0... Owner: The OWNER bit is NOT SET
+                        .... .... .... .... .... .... .... .1.. Enabled: The ENABLED bit is SET
+                        .... .... .... .... .... .... .... ..1. Enabled By Default: The ENABLED_BY_DEFAULT bit is SET
+                        .... .... .... .... .... .... .... ...1 Mandatory: The MANDATORY bit is SET
+                      Relative ID: 520
+                      Attributes: 7
+                        ..0. .... .... .... .... .... .... .... Resource: The RESOURCE bit is NOT SET
+                        .... .... .... .... .... .... .... 0... Owner: The OWNER bit is NOT SET
+                        .... .... .... .... .... .... .... .1.. Enabled: The ENABLED bit is SET
+                        .... .... .... .... .... .... .... ..1. Enabled By Default: The ENABLED_BY_DEFAULT bit is SET
+                        .... .... .... .... .... .... .... ...1 Mandatory: The MANDATORY bit is SET
+                      Relative ID: 518
+                      Attributes: 7
+                        ..0. .... .... .... .... .... .... .... Resource: The RESOURCE bit is NOT SET
+                        .... .... .... .... .... .... .... 0... Owner: The OWNER bit is NOT SET
+                        .... .... .... .... .... .... .... .1.. Enabled: The ENABLED bit is SET
+                        .... .... .... .... .... .... .... ..1. Enabled By Default: The ENABLED_BY_DEFAULT bit is SET
+                        .... .... .... .... .... .... .... ...1 Mandatory: The MANDATORY bit is SET
+                      Relative ID: 519
+                      Attributes: 7
+                        ..0. .... .... .... .... .... .... .... Resource: The RESOURCE bit is NOT SET
+                        .... .... .... .... .... .... .... 0... Owner: The OWNER bit is NOT SET
+                        .... .... .... .... .... .... .... .1.. Enabled: The ENABLED bit is SET
+                        .... .... .... .... .... .... .... ..1. Enabled By Default: The ENABLED_BY_DEFAULT bit is SET
+                        .... .... .... .... .... .... .... ...1 Mandatory: The MANDATORY bit is SET
                     Logon Domain ID: S-1-5-21-3541430928-2051711210-1391384369
                     Effective Name: 'Administrator'
                     Full Name: ''
@@ -538,7 +602,7 @@ RSpec.describe 'kerberos inspect ticket' do
                     Logon Domain Name: 'WINDOMAIN.LOCAL'
                   Client Info:
                     Name: 'Administrator'
-                    Client ID: 2023-01-13 14:31:25 +0000
+                    Client ID: #{Time.parse('2023-01-13 14:31:25 UTC').to_time}
                   Pac Server Checksum:
                     Signature: 81a20da731b3b9bdd2e756dc
                   Pac Privilege Server Checksum:
@@ -550,7 +614,7 @@ RSpec.describe 'kerberos inspect ticket' do
   let(:expected_encrypted_aes_output) do
     expected_output = ['No decryption key provided proceeding without decryption.']
     expected_output << "#{file_format} File:#{ticket_path}"
-    expected_output << <<~'EOF'.chomp # Single quote removes interpolation for the hex results
+    expected_output << <<~EOF.chomp
       Primary Principal: Administrator@WINDOMAIN.LOCAL
       Ccache version: 4
 
@@ -566,10 +630,10 @@ RSpec.describe 'kerberos inspect ticket' do
           Addresses: 0
           Authdatas: 0
           Times:
-            Auth time: 2023-01-13 14:31:25 +0000
-            Start time: 2023-01-13 14:31:25 +0000
-            End time: 2033-01-10 14:31:25 +0000
-            Renew Till: 2033-01-10 14:31:25 +0000
+            Auth time: #{Time.parse('2023-01-13 14:31:25 UTC').to_time}
+            Start time: #{Time.parse('2023-01-13 14:31:25 UTC').to_time}
+            End time: #{Time.parse('2033-01-10 14:31:25 UTC').to_time}
+            Renew Till: #{Time.parse('2033-01-10 14:31:25 UTC').to_time}
           Ticket:
             Ticket Version Number: 5
             Realm: WINDOMAIN.LOCAL
@@ -585,7 +649,7 @@ RSpec.describe 'kerberos inspect ticket' do
 
   let(:expected_decrypted_nthash_output) do
     expected_output = ["#{file_format} File:#{ticket_path}"]
-    expected_output << <<~'EOF'.chomp # Single quote removes interpolation for the hex results
+    expected_output << <<~EOF.chomp
       Primary Principal: Administrator@WINDOMAIN.LOCAL
       Ccache version: 4
 
@@ -601,10 +665,10 @@ RSpec.describe 'kerberos inspect ticket' do
           Addresses: 0
           Authdatas: 0
           Times:
-            Auth time: 2023-01-13 14:36:39 +0000
-            Start time: 2023-01-13 14:36:39 +0000
-            End time: 2033-01-10 14:36:39 +0000
-            Renew Till: 2033-01-10 14:36:39 +0000
+            Auth time: #{Time.parse('2023-01-13 14:36:39 UTC').to_time}
+            Start time: #{Time.parse('2023-01-13 14:36:39 UTC').to_time}
+            End time: #{Time.parse('2033-01-10 14:36:39 UTC').to_time}
+            Renew Till: #{Time.parse('2033-01-10 14:36:39 UTC').to_time}
           Ticket:
             Ticket Version Number: 5
             Realm: WINDOMAIN.LOCAL
@@ -614,20 +678,20 @@ RSpec.describe 'kerberos inspect ticket' do
               Key Version Number: 2
               Decrypted (with key: 88e4d9fabaecf3dec18dd80905521b29):
                 Times:
-                  Auth time: 2023-01-13 14:36:39 UTC
-                  Start time: 2023-01-13 14:36:39 UTC
-                  End time: 2033-01-10 14:36:39 UTC
-                  Renew Till: 2033-01-10 14:36:39 UTC
+                  Auth time: #{Time.parse('2023-01-13 14:36:39 UTC').to_time}
+                  Start time: #{Time.parse('2023-01-13 14:36:39 UTC').to_time}
+                  End time: #{Time.parse('2033-01-10 14:36:39 UTC').to_time}
+                  Renew Till: #{Time.parse('2033-01-10 14:36:39 UTC').to_time}
                 Client Addresses: 0
                 Transited: tr_type: 0, Contents: ""
                 Client Name: 'Administrator'
                 Client Realm: 'WINDOMAIN.LOCAL'
                 Ticket etype: 23 (RC4_HMAC)
-                Encryption Key: 66383738646463363738633761643766
+                Session Key: 66383738646463363738633761643766
                 Flags: 0x50a00000 (FORWARDABLE, PROXIABLE, RENEWABLE, PRE_AUTHENT)
                 PAC:
                   Validation Info:
-                    Logon Time: 2023-01-13 14:36:39 +0000
+                    Logon Time: #{Time.parse('2023-01-13 14:36:39 UTC').to_time}
                     Logoff Time: Never Expires (inf)
                     Kick Off Time: Never Expires (inf)
                     Password Last Set: No Time Set (0)
@@ -638,21 +702,85 @@ RSpec.describe 'kerberos inspect ticket' do
                     User ID: 500
                     Primary Group ID: 513
                     User Flags: 0
+                      .... .... .... .... ..0. .... .... .... Used Lmv2 Auth And Ntlmv2 Session Key: The USED_LMV2_AUTH_AND_NTLMV2_SESSION_KEY bit is NOT SET
+                      .... .... .... .... ...0 .... .... .... Used Lmv2 Auth And Session Key: The USED_LMV2_AUTH_AND_SESSION_KEY bit is NOT SET
+                      .... .... .... .... .... 0... .... .... Used Ntlmv2 Auth And Session Key: The USED_NTLMV2_AUTH_AND_SESSION_KEY bit is NOT SET
+                      .... .... .... .... .... .0.. .... .... Profile Path Populated: The PROFILE_PATH_POPULATED bit is NOT SET
+                      .... .... .... .... .... ..0. .... .... Resource Group Ids: The RESOURCE_GROUP_IDS bit is NOT SET
+                      .... .... .... .... .... ...0 .... .... Accepts Ntlmv2: The ACCEPTS_NTLMV2 bit is NOT SET
+                      .... .... .... .... .... .... 0... .... Machine Account: The MACHINE_ACCOUNT bit is NOT SET
+                      .... .... .... .... .... .... .0.. .... Sub Authentication: The SUB_AUTHENTICATION bit is NOT SET
+                      .... .... .... .... .... .... ..0. .... Extra Sids: The EXTRA_SIDS bit is NOT SET
+                      .... .... .... .... .... .... .... 0... Lan Manager: The LAN_MANAGER bit is NOT SET
+                      .... .... .... .... .... .... .... ..0. No Encryption: The NO_ENCRYPTION bit is NOT SET
+                      .... .... .... .... .... .... .... ...0 Guest: The GUEST bit is NOT SET
                     User Session Key: 00000000000000000000000000000000
                     User Account Control: 528
+                      .... .... ..0. .... .... .... .... .... Use Aes Keys: The USE_AES_KEYS bit is NOT SET
+                      .... .... ...0 .... .... .... .... .... Partial Secrets Account: The PARTIAL_SECRETS_ACCOUNT bit is NOT SET
+                      .... .... .... 0... .... .... .... .... No Auth Data Required: The NO_AUTH_DATA_REQUIRED bit is NOT SET
+                      .... .... .... .0.. .... .... .... .... Trusted To Authenticate For Delegation: The TRUSTED_TO_AUTHENTICATE_FOR_DELEGATION bit is NOT SET
+                      .... .... .... ..0. .... .... .... .... Password Expired: The PASSWORD_EXPIRED bit is NOT SET
+                      .... .... .... ...0 .... .... .... .... Dont Require Preauth: The DONT_REQUIRE_PREAUTH bit is NOT SET
+                      .... .... .... .... 0... .... .... .... Use Des Key Only: The USE_DES_KEY_ONLY bit is NOT SET
+                      .... .... .... .... .0.. .... .... .... Not Delegated: The NOT_DELEGATED bit is NOT SET
+                      .... .... .... .... ..0. .... .... .... Trusted For Delegation: The TRUSTED_FOR_DELEGATION bit is NOT SET
+                      .... .... .... .... ...0 .... .... .... Smartcard Required: The SMARTCARD_REQUIRED bit is NOT SET
+                      .... .... .... .... .... 0... .... .... Encrypted Test Password Allowed: The ENCRYPTED_TEST_PASSWORD_ALLOWED bit is NOT SET
+                      .... .... .... .... .... .0.. .... .... Account Auto Lock: The ACCOUNT_AUTO_LOCK bit is NOT SET
+                      .... .... .... .... .... ..1. .... .... Dont Expire Password: The DONT_EXPIRE_PASSWORD bit is SET
+                      .... .... .... .... .... ...0 .... .... Server Trust Account: The SERVER_TRUST_ACCOUNT bit is NOT SET
+                      .... .... .... .... .... .... 0... .... Workstation Trust Account: The WORKSTATION_TRUST_ACCOUNT bit is NOT SET
+                      .... .... .... .... .... .... .0.. .... Interdomain Trust Account: The INTERDOMAIN_TRUST_ACCOUNT bit is NOT SET
+                      .... .... .... .... .... .... ..0. .... Mns Logon Account: The MNS_LOGON_ACCOUNT bit is NOT SET
+                      .... .... .... .... .... .... ...1 .... Normal Account: The NORMAL_ACCOUNT bit is SET
+                      .... .... .... .... .... .... .... 0... Temp Duplicate Account: The TEMP_DUPLICATE_ACCOUNT bit is NOT SET
+                      .... .... .... .... .... .... .... .0.. Password Not Required: The PASSWORD_NOT_REQUIRED bit is NOT SET
+                      .... .... .... .... .... .... .... ..0. Home Directory Required: The HOME_DIRECTORY_REQUIRED bit is NOT SET
+                      .... .... .... .... .... .... .... ...0 Account Disabled: The ACCOUNT_DISABLED bit is NOT SET
                     Sub Auth Status: 0
                     Last Successful Interactive Logon: No Time Set (0)
                     Last Failed Interactive Logon: No Time Set (0)
                     Failed Interactive Logon Count: 0
-                    SID Count: 0
+                    Extra SID Count: 0
                     Resource Group Count: 0
                     Group Count: 5
                     Group IDs:
-                      Relative ID: 513, Attributes: 7
-                      Relative ID: 512, Attributes: 7
-                      Relative ID: 520, Attributes: 7
-                      Relative ID: 518, Attributes: 7
-                      Relative ID: 519, Attributes: 7
+                      Relative ID: 513
+                      Attributes: 7
+                        ..0. .... .... .... .... .... .... .... Resource: The RESOURCE bit is NOT SET
+                        .... .... .... .... .... .... .... 0... Owner: The OWNER bit is NOT SET
+                        .... .... .... .... .... .... .... .1.. Enabled: The ENABLED bit is SET
+                        .... .... .... .... .... .... .... ..1. Enabled By Default: The ENABLED_BY_DEFAULT bit is SET
+                        .... .... .... .... .... .... .... ...1 Mandatory: The MANDATORY bit is SET
+                      Relative ID: 512
+                      Attributes: 7
+                        ..0. .... .... .... .... .... .... .... Resource: The RESOURCE bit is NOT SET
+                        .... .... .... .... .... .... .... 0... Owner: The OWNER bit is NOT SET
+                        .... .... .... .... .... .... .... .1.. Enabled: The ENABLED bit is SET
+                        .... .... .... .... .... .... .... ..1. Enabled By Default: The ENABLED_BY_DEFAULT bit is SET
+                        .... .... .... .... .... .... .... ...1 Mandatory: The MANDATORY bit is SET
+                      Relative ID: 520
+                      Attributes: 7
+                        ..0. .... .... .... .... .... .... .... Resource: The RESOURCE bit is NOT SET
+                        .... .... .... .... .... .... .... 0... Owner: The OWNER bit is NOT SET
+                        .... .... .... .... .... .... .... .1.. Enabled: The ENABLED bit is SET
+                        .... .... .... .... .... .... .... ..1. Enabled By Default: The ENABLED_BY_DEFAULT bit is SET
+                        .... .... .... .... .... .... .... ...1 Mandatory: The MANDATORY bit is SET
+                      Relative ID: 518
+                      Attributes: 7
+                        ..0. .... .... .... .... .... .... .... Resource: The RESOURCE bit is NOT SET
+                        .... .... .... .... .... .... .... 0... Owner: The OWNER bit is NOT SET
+                        .... .... .... .... .... .... .... .1.. Enabled: The ENABLED bit is SET
+                        .... .... .... .... .... .... .... ..1. Enabled By Default: The ENABLED_BY_DEFAULT bit is SET
+                        .... .... .... .... .... .... .... ...1 Mandatory: The MANDATORY bit is SET
+                      Relative ID: 519
+                      Attributes: 7
+                        ..0. .... .... .... .... .... .... .... Resource: The RESOURCE bit is NOT SET
+                        .... .... .... .... .... .... .... 0... Owner: The OWNER bit is NOT SET
+                        .... .... .... .... .... .... .... .1.. Enabled: The ENABLED bit is SET
+                        .... .... .... .... .... .... .... ..1. Enabled By Default: The ENABLED_BY_DEFAULT bit is SET
+                        .... .... .... .... .... .... .... ...1 Mandatory: The MANDATORY bit is SET
                     Logon Domain ID: S-1-5-21-3541430928-2051711210-1391384369
                     Effective Name: 'Administrator'
                     Full Name: ''
@@ -664,7 +792,7 @@ RSpec.describe 'kerberos inspect ticket' do
                     Logon Domain Name: 'WINDOMAIN.LOCAL'
                   Client Info:
                     Name: 'Administrator'
-                    Client ID: 2023-01-13 14:36:39 +0000
+                    Client ID: #{Time.parse('2023-01-13 14:36:39 UTC').to_time}
                   Pac Server Checksum:
                     Signature: 1a038d8dd257a7d9b875280259ab0e4a
                   Pac Privilege Server Checksum:
@@ -676,7 +804,7 @@ RSpec.describe 'kerberos inspect ticket' do
   let(:expected_encrypted_nthash_output) do
     expected_output = ['No decryption key provided proceeding without decryption.']
     expected_output << "#{file_format} File:#{ticket_path}"
-    expected_output << <<~'EOF'.chomp # Single quote removes interpolation for the hex results
+    expected_output << <<~EOF.chomp
       Primary Principal: Administrator@WINDOMAIN.LOCAL
       Ccache version: 4
 
@@ -692,10 +820,10 @@ RSpec.describe 'kerberos inspect ticket' do
           Addresses: 0
           Authdatas: 0
           Times:
-            Auth time: 2023-01-13 14:36:39 +0000
-            Start time: 2023-01-13 14:36:39 +0000
-            End time: 2033-01-10 14:36:39 +0000
-            Renew Till: 2033-01-10 14:36:39 +0000
+            Auth time: #{Time.parse('2023-01-13 14:36:39 UTC').to_time}
+            Start time: #{Time.parse('2023-01-13 14:36:39 UTC').to_time}
+            End time: #{Time.parse('2033-01-10 14:36:39 UTC').to_time}
+            Renew Till: #{Time.parse('2033-01-10 14:36:39 UTC').to_time}
           Ticket:
             Ticket Version Number: 5
             Realm: WINDOMAIN.LOCAL

@@ -167,6 +167,10 @@ require 'digest/sha1'
         return to_linux_aarch64_elf(framework, code)
       end
 
+      if plat.index(Msf::Module::Platform::OSX)
+        return to_osx_aarch64_macho(framework, code)
+      end
+
       # XXX: Add remaining AARCH64 systems here
     end
 
@@ -306,8 +310,8 @@ require 'digest/sha1'
     block = blocks.first
 
     # TODO: Allow the entry point in a different block
-    if payload.length + 256 > block[1]
-      raise RuntimeError, "The largest block in .text does not have enough contiguous space (need:#{payload.length+256} found:#{block[1]})"
+    if payload.length + 256 >= block[1]
+      raise RuntimeError, "The largest block in .text does not have enough contiguous space (need:#{payload.length+257} found:#{block[1]})"
     end
 
     # Make a copy of the entire .text section
@@ -328,8 +332,8 @@ require 'digest/sha1'
       poff += 256
       eidx = rand(poff-(entry.length + 5))
     else          # place the entry pointer after the payload
-      poff -= 256
-      eidx = rand(block[1] - (poff + payload.length)) + poff + payload.length
+      poff -= [256, poff].min
+      eidx = rand(block[1] - (poff + payload.length + 256)) + poff + payload.length
     end
 
     # Relative jump from the end of the nops to the payload
@@ -416,7 +420,7 @@ require 'digest/sha1'
       if (virtualAddress...virtualAddress+sizeOfRawData).include?(addressOfEntryPoint)
         importsTable = pe.hdr.opt.DataDirectory[8..(8+4)].unpack('V')[0]
         if (importsTable - addressOfEntryPoint) < code.length
-          #shift original entry point to prevent tables overwritting
+          #shift original entry point to prevent tables overwriting
           addressOfEntryPoint = importsTable - code.length + 4
 
           entry_point_offset = pe._dos_header.v['e_lfanew'] + entryPoint_offset
@@ -530,7 +534,7 @@ require 'digest/sha1'
 
     case opts[:exe_type]
     when :service_exe
-      max_length = 8192
+      opts[:exe_max_sub_length] ||= 8192
       name = opts[:servicename]
       if name
         bo = pe.index('SERVICENAME')
@@ -541,18 +545,18 @@ require 'digest/sha1'
       end
       pe[136, 4] = [rand(0x100000000)].pack('V') unless opts[:sub_method]
     when :dll
-      max_length = 4096
+      opts[:exe_max_sub_length] ||= 4096
     when :exe_sub
-      max_length = 4096
+      opts[:exe_max_sub_length] ||= 4096
     end
 
     bo = self.find_payload_tag(pe, "Invalid PE EXE subst template: missing \"PAYLOAD:\" tag")
 
-    if code.length <= max_length
+    if code.length <= opts.fetch(:exe_max_sub_length)
       pe[bo, code.length] = [code].pack("a*")
     else
       raise RuntimeError, "The EXE generator now has a max size of " +
-                          "#{max_length} bytes, please fix the calling module"
+                          "#{opts[:exe_max_sub_length]} bytes, please fix the calling module"
     end
 
     if opts[:exe_type] == :dll
@@ -630,7 +634,7 @@ require 'digest/sha1'
   # @option opts        [Boolean] :sub_method use substitution technique with a
   #                                service template PE
   # @option opts        [String] :servicename name of the service, not used in
-  #                               substituion technique
+  #                               substitution technique
   #
   # @return [String] Windows Service PE file
   def self.to_win32pe_service(framework, code, opts = {})
@@ -671,6 +675,40 @@ require 'digest/sha1'
     exe_sub_method(code,opts)
   end
 
+  # self.set_template_default_winpe_dll
+  #
+  # Set the default winpe DLL template. It will select the template based on the parameters provided including the size
+  # architecture and an optional flavor. See data/templates/src/pe for template source code and build tools.
+  #
+  # @param opts [Hash]
+  # @param arch The architecture, as one the predefined constants.
+  # @param size [Integer] The size of the payload.
+  # @param flavor [Nil,String] An optional DLL flavor, one of 'mixed_mode' or 'dccw_gdiplus'
+  private_class_method def self.set_template_default_winpe_dll(opts, arch, size, flavor: nil)
+    return if opts[:template].present?
+
+    # dynamic size upgrading is only available when MSF selects the template because there's currently no way to
+    # determine the amount of space that is available in the template provided by the user so it's assumed to be 4KiB
+    match = {4096 => '', 262144 => '.256kib'}.find { |k,v| size <= k }
+    if match
+      opts[:exe_max_sub_length] = match.first
+      size_suffix = match.last
+    end
+
+    arch = {ARCH_X86 => 'x86', ARCH_X64 => 'x64'}.fetch(arch, nil)
+    raise ArgumentError, 'The specified arch is not supported, no DLL templates are available for it.' if arch.nil?
+
+    if flavor.present?
+      unless %w[mixed_mode dccw_gdiplus].include?(flavor)
+        raise ArgumentError, 'The specified flavor is not supported, no DLL templates are available for it.'
+      end
+
+      flavor = '_' + flavor
+    end
+
+    set_template_default(opts, "template_#{arch}_windows#{flavor}#{size_suffix}.dll")
+  end
+
   # self.to_win32pe_dll
   #
   # @param framework  [Msf::Framework]  The framework of you want to use
@@ -681,13 +719,8 @@ require 'digest/sha1'
   # @option           [String] :inject
   # @return           [String]
   def self.to_win32pe_dll(framework, code, opts = {})
-    # Allow the user to specify their own DLL template
-    if opts.fetch(:mixed_mode, false)
-      default_exe_template = 'template_x86_windows_mixed_mode.dll'
-    else
-      default_exe_template = 'template_x86_windows.dll'
-    end
-    set_template_default(opts, default_exe_template)
+    flavor = opts.fetch(:mixed_mode, false) ? 'mixed_mode' : nil
+    set_template_default_winpe_dll(opts, ARCH_X86, code.size, flavor: flavor)
     opts[:exe_type] = :dll
 
     if opts[:inject]
@@ -707,13 +740,9 @@ require 'digest/sha1'
   # @option           [String] :inject
   # @return           [String]
   def self.to_win64pe_dll(framework, code, opts = {})
-    # Allow the user to specify their own DLL template
-    if opts.fetch(:mixed_mode, false)
-      default_exe_template = 'template_x64_windows_mixed_mode.dll'
-    else
-      default_exe_template = 'template_x64_windows.dll'
-    end
-    set_template_default(opts, default_exe_template)
+    flavor = opts.fetch(:mixed_mode, false) ? 'mixed_mode' : nil
+    set_template_default_winpe_dll(opts, ARCH_X64, code.size, flavor: flavor)
+
     opts[:exe_type] = :dll
 
     if opts[:inject]
@@ -724,7 +753,7 @@ require 'digest/sha1'
   end
 
 
-  # self.to_win32pe_dll
+  # self.to_win32pe_dccw_gdiplus_dll
   #
   # @param framework  [Msf::Framework]  The framework of you want to use
   # @param code       [String]
@@ -734,18 +763,11 @@ require 'digest/sha1'
   # @option           [String] :inject
   # @return           [String]
   def self.to_win32pe_dccw_gdiplus_dll(framework, code, opts = {})
-    # Allow the user to specify their own DLL template
-    set_template_default(opts, "template_x86_windows_dccw_gdiplus.dll")
-    opts[:exe_type] = :dll
-
-    if opts[:inject]
-      self.to_win32pe(framework, code, opts)
-    else
-      exe_sub_method(code,opts)
-    end
+    set_template_default_winpe_dll(opts, ARCH_X86, code.size, flavor: 'dccw_gdiplus')
+    to_win32pe_dll(framework, code, opts)
   end
 
-  # self.to_win64pe_dll
+  # self.to_win64pe_dccw_gdiplus_dll
   #
   # @param framework  [Msf::Framework]  The framework of you want to use
   # @param code       [String]
@@ -755,15 +777,8 @@ require 'digest/sha1'
   # @option           [String] :inject
   # @return           [String]
   def self.to_win64pe_dccw_gdiplus_dll(framework, code, opts = {})
-    # Allow the user to specify their own DLL template
-    set_template_default(opts, "template_x64_windows_dccw_gdiplus.dll")
-    opts[:exe_type] = :dll
-
-    if opts[:inject]
-      raise RuntimeError, 'Template injection unsupported for x64 DLLs'
-    else
-      exe_sub_method(code,opts)
-    end
+    set_template_default_winpe_dll(opts, ARCH_X64, code.size, flavor: 'dccw_gdiplus')
+    to_win64pe_dll(framework, code, opts)
   end
 
   # Wraps an executable inside a Windows .msi file for auto execution when run
@@ -853,6 +868,25 @@ require 'digest/sha1'
     mo = self.get_file_contents(opts[:template])
     bo = self.find_payload_tag(mo, "Invalid OSX ArmLE Mach-O template: missing \"PAYLOAD:\" tag")
     mo[bo, code.length] = code
+    mo
+  end
+
+  # self.to_osx_aarch64_macho
+  #
+  # @param framework  [Msf::Framework]  The framework of you want to use
+  # @param code       [String]
+  # @param opts       [Hash]
+  # @option           [String] :template
+  # @return           [String]
+  def self.to_osx_aarch64_macho(framework, code, opts = {})
+
+    # Allow the user to specify their own template
+    set_template_default(opts, "template_aarch64_darwin.bin")
+
+    mo = self.get_file_contents(opts[:template])
+    bo = self.find_payload_tag(mo, "Invalid OSX Aarch64 Mach-O template: missing \"PAYLOAD:\" tag")
+    mo[bo, code.length] = code
+    Payload::MachO.new(mo).sign
     mo
   end
 
@@ -1593,7 +1627,7 @@ require 'digest/sha1'
   #   tag. Mostly irrelevant, except as an identifier in web.xml. Defaults to
   #   random.
   # @option opts :extra_files [Array<String,String>] Additional files to add
-  #   to the archive. First elment is filename, second is data
+  #   to the archive. First element is filename, second is data
   #
   # @todo Refactor to return a {Rex::Zip::Archive} or {Rex::Zip::Jar}
   #
@@ -1986,7 +2020,7 @@ require 'digest/sha1'
   # @param code [String] The shellcode for the resulting executable to run
   # @param fmt [String] One of the executable formats as defined in
   #   {.to_executable_fmt_formats}
-  # @param exeopts [Hash] Passed directly to the approrpriate method for
+  # @param exeopts [Hash] Passed directly to the appropriate method for
   #   generating an executable for the given +arch+/+plat+ pair.
   # @return [String] An executable appropriate for the given
   #   architecture/platform pair.
@@ -2127,6 +2161,8 @@ require 'digest/sha1'
           to_osx_arm_macho(framework, code, exeopts)
         when ARCH_PPC
           to_osx_ppc_macho(framework, code, exeopts)
+        when ARCH_AARCH64
+          to_osx_aarch64_macho(framework, code, exeopts)
         end
       end
       fmt == 'osx-app' ? Msf::Util::EXE.to_osx_app(macho) : macho

@@ -65,7 +65,7 @@ module Msf
 
           postgres_users.each do |postgres_user|
             row_data = postgres_user.split('|')
-            next if row_data.length < 2 # shoudld always be 2 based on query, but this will catch 'command not found' or other things like that
+            next if row_data.length < 2 # should always be 2 based on query, but this will catch 'command not found' or other things like that
 
             user = {
               'user' => row_data[0],
@@ -96,7 +96,7 @@ module Msf
 
           postgres_users.each do |postgres_user|
             row_data = postgres_user.split('|')
-            next if row_data.length < 2 # shoudld always be 2 based on query, but this will catch 'command not found' or other things like that
+            next if row_data.length < 2 # should always be 2 based on query, but this will catch 'command not found' or other things like that
 
             user = {
               'user' => row_data[0],
@@ -128,7 +128,7 @@ module Msf
 
           vpx_creds.each do |vpx_user|
             row_data = vpx_user.split('|')
-            next if row_data.length < 2 # shoudld always be 2 based on query, but this will catch 'command not found' or other things like that
+            next if row_data.length < 2 # should always be 2 based on query, but this will catch 'command not found' or other things like that
 
             user = {
               'user' => row_data[0],
@@ -217,7 +217,7 @@ module Msf
         # @param pg_password [String] postgress password
         # @param vcdb_user [String] virtual center database username
         # @param vcdb_name [String] virtual center database name
-        # @param vc_sym_key [String] sym key from virtual center
+        # @param _vc_sym_key [String] sym key from virtual center
         # @return [Array] list of hash tables where each table is a user, nil on error
         #
         def get_vpx_vms(pg_password, vcdb_user, vcdb_name, _vc_sym_key)
@@ -232,7 +232,7 @@ module Msf
 
           vm_rows.each do |vm_row|
             row_data = vm_row.split('|')
-            next if row_data.length < 5 # shoudld always be 5 based on query, but this will catch 'command not found' or other things like that
+            next if row_data.length < 5 # should always be 5 based on query, but this will catch 'command not found' or other things like that
 
             vm = {
               'vmid' => row_data[0],
@@ -266,7 +266,7 @@ module Msf
 
           vpxuser_rows.each do |vpxuser_row|
             row_data = vpxuser_row.split('|')
-            next if row_data.length < 4 # shoudld always be 4 based on query, but this will catch 'command not found' or other things like that
+            next if row_data.length < 4 # should always be 4 based on query, but this will catch 'command not found' or other things like that
 
             user = {
               'fqdn' => row_data[0],
